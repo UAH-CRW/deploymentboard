@@ -1,0 +1,212 @@
+EESchema Schematic File Version 4
+LIBS:board-cache
+EELAYER 26 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L MCU_Microchip_ATmega:ATxmega128A4U-AU U2
+U 1 1 5BD116FB
+P 4500 3000
+F 0 "U2" H 4500 2950 50  0000 C CNN
+F 1 "ATxmega128A4U-AU" H 4500 1950 50  0000 C CNN
+F 2 "Package_QFP:TQFP-44_10x10mm_P0.8mm" H 4500 3000 50  0001 C CIN
+F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-8387-8-and16-bit-AVR-Microcontroller-XMEGA-A4U_Datasheet.pdf" H 4500 3000 50  0001 C CNN
+	1    4500 3000
+	1    0    0    -1  
+$EndComp
+Text Label 5200 3600 0    50   ~ 0
+USARTC0_RX
+$Comp
+L power:GND #PWR0103
+U 1 1 5BD11CE2
+P 4500 4450
+F 0 "#PWR0103" H 4500 4200 50  0001 C CNN
+F 1 "GND" H 4505 4277 50  0000 C CNN
+F 2 "" H 4500 4450 50  0001 C CNN
+F 3 "" H 4500 4450 50  0001 C CNN
+	1    4500 4450
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4500 4450 4500 4400
+$Comp
+L Device:Q_NJFET_GDS Q1
+U 1 1 5BD24778
+P 8200 1850
+F 0 "Q1" H 8391 1896 50  0000 L CNN
+F 1 "Q_NJFET_GDS" H 8391 1805 50  0000 L CNN
+F 2 "" H 8400 1950 50  0001 C CNN
+F 3 "~" H 8200 1850 50  0001 C CNN
+	1    8200 1850
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x02 J1
+U 1 1 5BD2483E
+P 8500 1400
+F 0 "J1" H 8580 1392 50  0000 L CNN
+F 1 "Screw_Terminal_01x02" H 8580 1301 50  0000 L CNN
+F 2 "" H 8500 1400 50  0001 C CNN
+F 3 "~" H 8500 1400 50  0001 C CNN
+	1    8500 1400
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+6V #PWR0106
+U 1 1 5BD2490D
+P 8300 1200
+F 0 "#PWR0106" H 8300 1050 50  0001 C CNN
+F 1 "+6V" H 8315 1373 50  0000 C CNN
+F 2 "" H 8300 1200 50  0001 C CNN
+F 3 "" H 8300 1200 50  0001 C CNN
+	1    8300 1200
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0107
+U 1 1 5BD24955
+P 8300 2300
+F 0 "#PWR0107" H 8300 2050 50  0001 C CNN
+F 1 "GND" H 8305 2127 50  0000 C CNN
+F 2 "" H 8300 2300 50  0001 C CNN
+F 3 "" H 8300 2300 50  0001 C CNN
+	1    8300 2300
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small R1
+U 1 1 5BD2499D
+P 7950 2050
+F 0 "R1" H 8009 2096 50  0000 L CNN
+F 1 "10k" H 8009 2005 50  0000 L CNN
+F 2 "" H 7950 2050 50  0001 C CNN
+F 3 "~" H 7950 2050 50  0001 C CNN
+	1    7950 2050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8300 2050 8300 2250
+Wire Wire Line
+	7950 2150 7950 2250
+Wire Wire Line
+	7950 2250 8300 2250
+Connection ~ 8300 2250
+Wire Wire Line
+	8300 2250 8300 2300
+Wire Wire Line
+	8300 1650 8300 1500
+Wire Wire Line
+	8300 1400 8300 1200
+Wire Wire Line
+	8000 1850 7950 1850
+Text Label 7800 1850 2    50   ~ 0
+E_Match_Fire_1
+Wire Wire Line
+	7950 1950 7950 1850
+Connection ~ 7950 1850
+Wire Wire Line
+	7950 1850 7800 1850
+$Comp
+L Device:Q_NJFET_GDS Q?
+U 1 1 5BD28385
+P 8200 3650
+F 0 "Q?" H 8391 3696 50  0000 L CNN
+F 1 "Q_NJFET_GDS" H 8391 3605 50  0000 L CNN
+F 2 "" H 8400 3750 50  0001 C CNN
+F 3 "~" H 8200 3650 50  0001 C CNN
+	1    8200 3650
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x02 J?
+U 1 1 5BD2838C
+P 8500 3200
+F 0 "J?" H 8580 3192 50  0000 L CNN
+F 1 "Screw_Terminal_01x02" H 8580 3101 50  0000 L CNN
+F 2 "" H 8500 3200 50  0001 C CNN
+F 3 "~" H 8500 3200 50  0001 C CNN
+	1    8500 3200
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+6V #PWR?
+U 1 1 5BD28393
+P 8300 3000
+F 0 "#PWR?" H 8300 2850 50  0001 C CNN
+F 1 "+6V" H 8315 3173 50  0000 C CNN
+F 2 "" H 8300 3000 50  0001 C CNN
+F 3 "" H 8300 3000 50  0001 C CNN
+	1    8300 3000
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 5BD28399
+P 8300 4100
+F 0 "#PWR?" H 8300 3850 50  0001 C CNN
+F 1 "GND" H 8305 3927 50  0000 C CNN
+F 2 "" H 8300 4100 50  0001 C CNN
+F 3 "" H 8300 4100 50  0001 C CNN
+	1    8300 4100
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small R?
+U 1 1 5BD2839F
+P 7950 3850
+F 0 "R?" H 8009 3896 50  0000 L CNN
+F 1 "10k" H 8009 3805 50  0000 L CNN
+F 2 "" H 7950 3850 50  0001 C CNN
+F 3 "~" H 7950 3850 50  0001 C CNN
+	1    7950 3850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8300 3850 8300 4050
+Wire Wire Line
+	7950 3950 7950 4050
+Wire Wire Line
+	7950 4050 8300 4050
+Connection ~ 8300 4050
+Wire Wire Line
+	8300 4050 8300 4100
+Wire Wire Line
+	8300 3450 8300 3300
+Wire Wire Line
+	8300 3200 8300 3000
+Wire Wire Line
+	8000 3650 7950 3650
+Text Label 7800 3650 2    50   ~ 0
+E_Match_Fire_2
+Wire Wire Line
+	7950 3750 7950 3650
+Connection ~ 7950 3650
+Wire Wire Line
+	7950 3650 7800 3650
+Text Label 3800 2800 2    50   ~ 0
+E_Match_Fire_1
+Text Label 3800 2900 2    50   ~ 0
+E_Match_Fire_2
+$Comp
+L Connector:USB_B_Micro J?
+U 1 1 5BD28F8B
+P 1750 2100
+F 0 "J?" H 1805 2567 50  0000 C CNN
+F 1 "USB_B_Micro" H 1805 2476 50  0000 C CNN
+F 2 "" H 1900 2050 50  0001 C CNN
+F 3 "~" H 1900 2050 50  0001 C CNN
+	1    1750 2100
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC

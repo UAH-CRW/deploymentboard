@@ -22,6 +22,7 @@ F 0 "U2" H 5700 3000 50  0000 C CNN
 F 1 "ATxmega128A4U-AU" H 5700 2000 50  0000 C CNN
 F 2 "Package_QFP:TQFP-44_10x10mm_P0.8mm" H 5700 3050 50  0001 C CIN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-8387-8-and16-bit-AVR-Microcontroller-XMEGA-A4U_Datasheet.pdf" H 5700 3050 50  0001 C CNN
+F 4 "https://www.digikey.com/product-detail/en/microchip-technology/ATXMEGA32A4U-AUR/ATXMEGA32A4U-AURCT-ND/3903783" H 5700 3050 50  0001 C CNN "Vendor Link"
 	1    5700 3050
 	1    0    0    -1  
 $EndComp

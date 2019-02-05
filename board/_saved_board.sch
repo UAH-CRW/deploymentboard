@@ -763,155 +763,6 @@ Wire Wire Line
 	850  2400 850  2500
 Wire Wire Line
 	750  1900 750  2000
-$Comp
-L Custom_components:IC_REG_BCK_3.3V U4
-U 1 1 5C0B9334
-P 2600 1550
-F 0 "U4" H 2575 2115 50  0000 C CNN
-F 1 "IC_REG_BCK_3.3V" H 2575 2024 50  0000 C CNN
-F 2 "custom_components:10-pin FP TPS62056DGSR" H 2600 1550 50  0001 C CNN
-F 3 "" H 2600 1550 50  0001 C CNN
-	1    2600 1550
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	2100 1250 1950 1250
-Wire Wire Line
-	2100 1350 1950 1350
-Wire Wire Line
-	1950 1350 1950 1250
-Wire Wire Line
-	2100 1450 1950 1450
-Wire Wire Line
-	1950 1450 1950 1550
-Wire Wire Line
-	1950 1550 2100 1550
-Wire Wire Line
-	1950 1550 1950 2100
-Connection ~ 1950 1550
-$Comp
-L Device:C_Small C8
-U 1 1 5C0CA96C
-P 1650 1650
-F 0 "C8" H 1742 1696 50  0000 L CNN
-F 1 "10uF" H 1742 1605 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 1650 1650 50  0001 C CNN
-F 3 "~" H 1650 1650 50  0001 C CNN
-	1    1650 1650
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	1650 1550 1650 1250
-Connection ~ 1650 1250
-Wire Wire Line
-	1650 1750 1650 2100
-Wire Wire Line
-	1950 2100 2450 2100
-Wire Wire Line
-	2450 2100 2450 1950
-$Comp
-L power:GND #PWR04
-U 1 1 5C0DDB64
-P 2450 2100
-F 0 "#PWR04" H 2450 1850 50  0001 C CNN
-F 1 "GND" H 2455 1927 50  0000 C CNN
-F 2 "" H 2450 2100 50  0001 C CNN
-F 3 "" H 2450 2100 50  0001 C CNN
-	1    2450 2100
-	1    0    0    -1  
-$EndComp
-Connection ~ 2450 2100
-Wire Wire Line
-	3050 1550 3150 1550
-Wire Wire Line
-	3150 1550 3150 2100
-Wire Wire Line
-	3150 2100 2750 2100
-Wire Wire Line
-	3050 1450 3150 1450
-Wire Wire Line
-	3150 1450 3150 1550
-Connection ~ 3150 1550
-Wire Wire Line
-	2750 1950 2750 2100
-Connection ~ 2750 2100
-Wire Wire Line
-	2750 2100 2450 2100
-$Comp
-L Device:L L1
-U 1 1 5C0EDC40
-P 3250 1250
-F 0 "L1" V 3440 1250 50  0000 C CNN
-F 1 "10uH" V 3349 1250 50  0000 C CNN
-F 2 "Inductor_SMD:L_1210_3225Metric_Pad1.42x2.65mm_HandSolder" H 3250 1250 50  0001 C CNN
-F 3 "~" H 3250 1250 50  0001 C CNN
-	1    3250 1250
-	0    -1   -1   0   
-$EndComp
-Wire Wire Line
-	3050 1250 3100 1250
-$Comp
-L power:+3.3V #PWR05
-U 1 1 5C0F37D5
-P 3800 1250
-F 0 "#PWR05" H 3800 1100 50  0001 C CNN
-F 1 "+3.3V" H 3815 1423 50  0000 C CNN
-F 2 "" H 3800 1250 50  0001 C CNN
-F 3 "" H 3800 1250 50  0001 C CNN
-	1    3800 1250
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	3400 1250 3450 1250
-Wire Wire Line
-	3050 1350 3450 1350
-Wire Wire Line
-	3450 1350 3450 1250
-Connection ~ 3450 1250
-$Comp
-L Device:C_Small C9
-U 1 1 5C0FF161
-P 3450 1650
-F 0 "C9" H 3250 1700 50  0000 L CNN
-F 1 "22uF" H 3200 1600 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 3450 1650 50  0001 C CNN
-F 3 "~" H 3450 1650 50  0001 C CNN
-	1    3450 1650
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	3450 1750 3450 2100
-Wire Wire Line
-	3450 2100 3150 2100
-Connection ~ 3150 2100
-Wire Wire Line
-	3450 1250 3700 1250
-Wire Wire Line
-	3450 1550 3450 1350
-Connection ~ 3450 1350
-Wire Wire Line
-	1650 1250 1550 1250
-$Comp
-L Device:C_Small C10
-U 1 1 5C156E22
-P 3700 1650
-F 0 "C10" H 3792 1696 50  0000 L CNN
-F 1 "10uF" H 3792 1605 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 3700 1650 50  0001 C CNN
-F 3 "~" H 3700 1650 50  0001 C CNN
-	1    3700 1650
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	3700 1550 3700 1250
-Connection ~ 3700 1250
-Wire Wire Line
-	3700 1250 3800 1250
-Wire Wire Line
-	3700 1750 3700 2100
-Wire Wire Line
-	3700 2100 3450 2100
-Connection ~ 3450 2100
 Wire Notes Line
 	550  650  4050 650 
 Wire Notes Line
@@ -1025,12 +876,6 @@ Wire Notes Line
 	7000 4750 4400 4750
 Text Notes 5550 600  0    50   ~ 0
 Microcontroller
-Wire Wire Line
-	1650 2100 1950 2100
-Connection ~ 1950 2100
-Wire Wire Line
-	1650 1250 1950 1250
-Connection ~ 1950 1250
 $Comp
 L Connector_Generic:Conn_02x03_Odd_Even J5
 U 1 1 5C4DF7A4
@@ -1526,17 +1371,6 @@ F 3 "" H 750 1900 50  0001 C CNN
 $EndComp
 $Comp
 L power:+12V #PWR?
-U 1 1 5C6A979C
-P 1550 1250
-F 0 "#PWR?" H 1550 1100 50  0001 C CNN
-F 1 "+12V" H 1565 1423 50  0000 C CNN
-F 2 "" H 1550 1250 50  0001 C CNN
-F 3 "" H 1550 1250 50  0001 C CNN
-	1    1550 1250
-	1    0    0    -1  
-$EndComp
-$Comp
-L power:+12V #PWR?
 U 1 1 5C6A9C8C
 P 9250 750
 F 0 "#PWR?" H 9250 600 50  0001 C CNN
@@ -1574,4 +1408,59 @@ Wire Wire Line
 	850  3800 850  4100
 Text Notes 1050 3950 0    50   ~ 0
 External power header
+$Comp
+L Custom_Components:IC_REG_BUCK_3.3_VAP1509 U?
+U 1 1 5C6DB9D9
+P 2650 1400
+F 0 "U?" H 2650 1550 50  0000 C CNN
+F 1 "IC_REG_BUCK_3.3_VAP1509" H 2650 1350 50  0000 C CNN
+F 2 "" H 3150 1300 50  0001 C CNN
+F 3 "" H 3150 1300 50  0001 C CNN
+	1    2650 1400
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:L_Small L?
+U 1 1 5C6DBCD4
+P 1650 1150
+F 0 "L?" H 1698 1196 50  0000 L CNN
+F 1 "47nH" H 1698 1105 50  0000 L CNN
+F 2 "" H 1650 1150 50  0001 C CNN
+F 3 "~" H 1650 1150 50  0001 C CNN
+	1    1650 1150
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:D_Small D?
+U 1 1 5C6DBE4C
+P 1700 1550
+F 0 "D?" H 1700 1755 50  0000 C CNN
+F 1 "D_Small" H 1700 1664 50  0000 C CNN
+F 2 "" V 1700 1550 50  0001 C CNN
+F 3 "~" V 1700 1550 50  0001 C CNN
+	1    1700 1550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C?
+U 1 1 5C6DBF12
+P 2150 1750
+F 0 "C?" H 2242 1796 50  0000 L CNN
+F 1 "C_Small" H 2242 1705 50  0000 L CNN
+F 2 "" H 2150 1750 50  0001 C CNN
+F 3 "~" H 2150 1750 50  0001 C CNN
+	1    2150 1750
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C?
+U 1 1 5C6DBFD8
+P 2750 1950
+F 0 "C?" H 2842 1996 50  0000 L CNN
+F 1 "C_Small" H 2842 1905 50  0000 L CNN
+F 2 "" H 2750 1950 50  0001 C CNN
+F 3 "~" H 2750 1950 50  0001 C CNN
+	1    2750 1950
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC

@@ -11,7 +11,7 @@
 
 #include <asf.h>
 
-void TC0_setup(TC0_t* TC, enum sysclk_port_id sysclk_port, uint8_t pins_to_ctrl);
+void TC0_setup(TC0_t* TC, enum sysclk_port_id sysclk_port, uint8_t pins_to_ctrl, bool ctrl_pins);
 void TC_config(TC0_t* TC, float freq, float duty);
 
 #endif /* TIMERCOUNTER_H_ */

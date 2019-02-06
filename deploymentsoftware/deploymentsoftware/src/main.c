@@ -26,11 +26,11 @@ Daniel Corey
 
 typedef enum {STATE_DISARMED, STATE_ARMED} devicestate;
 typedef enum {CMD_INVALID, CMD_GET_VERSION, CMD_ARM, CMD_DISARM, CMD_FIRE_PRIMARY, CMD_FIRE_BACKUP} devicecommand;
-#define STR_CMD_GET_VERSION			"UAH_CRW_DEPLOYMENT_CHECK_VERSION\n"
-#define STR_CMD_ARM					"UAH_CRW_arm_payload_deployment\n"
-#define STR_CMD_DISARM				"UAH_CRW_disarm_payload_deployment\n"
-#define STR_CMD_FIRE_PRIMARY		"UAH_CRW_deploy_payload_primary\n"
-#define STR_CMD_FIRE_BACKUP			"UAH_CRW_deploy_payload_backup\n"
+#define STR_CMD_GET_VERSION			"UAH_CRW_DEPLOYMENT_CHECK_VERSION"
+#define STR_CMD_ARM					"UAH_CRW_arm_payload_deployment"
+#define STR_CMD_DISARM				"UAH_CRW_disarm_payload_deployment"
+#define STR_CMD_FIRE_PRIMARY		"UAH_CRW_deploy_payload_primary"
+#define STR_CMD_FIRE_BACKUP			"UAH_CRW_deploy_payload_backup"
 #define CMD_UNIFORM_PRECURSOR		"UAH_CRW"
 #define TWICE_LONGEST_VALID_CMD		68U
 #define LONGEST_VALID_CMD			34U
@@ -47,6 +47,8 @@ void retract_solenoid(void);
 void extend_solenoid(void);
 void config_LEDs_and_buzzer(devicestate state);
 
+uint32_t time_ds = 0; //Time in deci-seconds
+
 #define XBEE_BACKING_BUFF_LEN			512
 RingBufferu8_t xbee_input_buff;
 uint8_t xbee_input_backing_buffer[XBEE_BACKING_BUFF_LEN];
@@ -57,19 +59,24 @@ void input_buff_setup(void);
 #define BUZZER_CONTINUOUS				2
 uint8_t isr_buzzer_duty;
 
+ISR (CLOCK_INT_VECT)
+{
+	time_ds++;
+}
+
 ISR (BUZZER_INT_VECT)
 {
-	switch (isr_buzzer_duty)
+	if (isr_buzzer_duty == BUZZER_OFF || (isr_buzzer_duty == BUZZER_BEEPING && time_ds % 2 == 0))
 	{
-		case BUZZER_OFF:
-			gpio_set_pin_low(BUZZER_CTRL_PIN);
-			break;
-		case BUZZER_BEEPING:
-			gpio_toggle_pin(BUZZER_CTRL_PIN);
-			break;
-		default:
-			gpio_set_pin_high(BUZZER_CTRL_PIN);
-			break;
+		gpio_set_pin_low(BUZZER_CTRL_PIN);
+	}
+	else if (isr_buzzer_duty == BUZZER_BEEPING)
+	{
+		gpio_toggle_pin(BUZZER_CTRL_PIN);
+	}
+	else
+	{
+		gpio_toggle_pin(BUZZER_CTRL_PIN);
 	}
 }
 
@@ -86,25 +93,34 @@ int main (void)
 	LED_setup();
 	buzzer_setup();
 	UART_computer_init(&COMMS_USART, &PORTC, USART_TX_PIN, USART_RX_PIN);
-	
+	isr_buzzer_duty = BUZZER_CONTINUOUS;
+
 	devicestate state = STATE_DISARMED;
 	devicecommand currentcmd = CMD_INVALID;
 	
 	//Enable interrupts for serial receive and buzzer control
-	TC0_setup(&BUZZER_INTERRUPT_TC, BUZZER_INTERRUPT_SYSCLK_PORT, 0b000);
-	TC_config(&BUZZER_INTERRUPT_TC, 10.0f, 0.5f);
-	BUZZER_INTERRUPT_TC.INTCTRLA |= 0b00001100; //Enable buzzer TC interrupt, high-level
+	TC0_setup(&BUZZER_INTERRUPT_TC, BUZZER_INTERRUPT_SYSCLK_PORT, 0b0000, false);
+	TC_config(&BUZZER_INTERRUPT_TC, 1000.0f, 0.5f);
+	BUZZER_INTERRUPT_TC.INTCTRLA = TC_OVFINTLVL_MED_gc; //Enable buzzer TC interrupt, medium-level
+	
+	TC0_setup(&CLOCK_INTERRUPT_TC, CLOCK_INTERRUPT_SYSCLK_PORT, 0b0000, false);
+	TC_config(&CLOCK_INTERRUPT_TC, 10.0f, 0.5f);
+	CLOCK_INTERRUPT_TC.INTCTRLA = TC_OVFINTLVL_HI_gc; //Enable buzzer TC interrupt, high-level
+	
 	//Enable USART RX interrupt (clock and whatnot already enabled by uart_computer_init)
-	COMMS_USART.CTRLA |= (USART_INT_LVL_MED << 4); //Set USART RX interrupt to medium-level
+	input_buff_setup();
+	COMMS_USART.CTRLA |= (USART_INT_LVL_LO << 4); //Set USART RX interrupt to low-level
 	PMIC.CTRL |= PMIC_HILVLEN_bm | PMIC_MEDLVLEN_bm | PMIC_LOLVLEN_bm; //All interrupt levels enabled
 	sei(); //Interrupts on
 	
-	TC0_setup(&LED_1_TC, SYSCLK_PORT_C, 0b0001);
-	TC0_setup(&LED_2_TC, SYSCLK_PORT_D, 0b0001);
+	TC0_setup(&LED_1_TC, SYSCLK_PORT_C, 0b0001, true);
+	TC0_setup(&LED_2_TC, SYSCLK_PORT_D, 0b0001, true);
 	config_LEDs_and_buzzer(state);
 	
 	while (1)
 	{
+		//printf("Running main loop\n");
+		delay_ms(100);
 		currentcmd = getnextcmd();
 		
 		//This command is valid in any state
@@ -197,8 +213,8 @@ void pin_setup(void)
 	gpio_configure_pin(LED_1_PIN, IOPORT_DIR_OUTPUT);
 	gpio_set_pin_low(LED_1_PIN);
 	
-	gpio_configure_pin(LED_2_PIN, IOPORT_DIR_OUTPUT);
-	gpio_set_pin_low(LED_2_PIN);
+	//gpio_configure_pin(LED_2_PIN, IOPORT_DIR_OUTPUT);
+	//gpio_set_pin_low(LED_2_PIN);
 	
 	gpio_configure_pin(EMATCH_PRIMARY_PIN, IOPORT_DIR_OUTPUT);
 	gpio_set_pin_low(EMATCH_PRIMARY_PIN);
@@ -214,14 +230,27 @@ devicecommand getnextcmd(void)
 {
 	uint8_t buffer[TWICE_LONGEST_VALID_CMD + 1] = {0};
 	rbu8_read(&xbee_input_buff, buffer, TWICE_LONGEST_VALID_CMD);
-	uint8_t* cmd_start = (uint8_t*)strstr((const char*)buffer, CMD_UNIFORM_PRECURSOR); //Find when first possible command begins
+	char* cmd_start = (uint8_t*)strstr((const char*)buffer, CMD_UNIFORM_PRECURSOR); //Find when first possible command begins
+	/*if (strlen(buffer) > 0)
+	{
+		printf("Parsing buffer length %i, parsing [%s]\n", strlen(buffer), buffer);
+		printf("Coming up: %s\n", cmd_start);
+	}*/
 	if (cmd_start == NULL) //No command starting within this buffer, scrap it all
 	{
 		rbu8_delete_oldest(&xbee_input_buff, strlen((const char*)buffer));
 		return CMD_INVALID;
 	}
 	//Otherwise, there may be a valid command somewhere in here. Check for it
-	if (memcmp(cmd_start, STR_CMD_GET_VERSION, strlen(STR_CMD_GET_VERSION)) == 0)
+	/*uint8_t i;
+	for (i = 0; i < min(strlen(STR_CMD_GET_VERSION), strlen(cmd_start)); i++)
+	{
+		if (cmd_start[i] != STR_CMD_GET_VERSION[i])
+		{
+			printf("Match failed! i = %u, val1 = %c, val2 = %c\n", i, cmd_start[i], STR_CMD_GET_VERSION[i]);
+		}
+	}*/
+	if (memcmp(cmd_start, STR_CMD_GET_VERSION, min(strlen(STR_CMD_GET_VERSION), strlen(cmd_start))) == 0)
 	{
 		rbu8_delete_oldest(&xbee_input_buff, (uint16_t)cmd_start - (uint16_t)buffer + strlen(STR_CMD_GET_VERSION)); //Delete everything through the end of the CMD
 		return CMD_GET_VERSION;
@@ -248,7 +277,8 @@ devicecommand getnextcmd(void)
 	}
 	else //Not a real command
 	{
-		if (strlen((const char*)buffer) - (cmd_start - buffer) > LONGEST_VALID_CMD) //There's a lot of stuff that isn't a good command
+		printf("Not a real command\n");
+		if (strlen((const char*)buffer) - ((uint16_t)cmd_start - (uint16_t)buffer) > LONGEST_VALID_CMD) //There's a lot of stuff that isn't a good command
 		{
 			rbu8_delete_oldest(&xbee_input_buff, (uint16_t)cmd_start - (uint16_t)buffer + 1);
 		}
@@ -263,6 +293,7 @@ devicecommand getnextcmd(void)
 void firing_autosequence(port_pin_t ematch_pin)
 {
 	//TODO: set buzzer duty cycle to 100%
+	isr_buzzer_duty = BUZZER_CONTINUOUS;
 	set_12V_powered(true);
 	delay_s(7); //Charge capacitor bank
 	retract_solenoid();

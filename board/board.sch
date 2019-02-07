@@ -311,7 +311,7 @@ U 1 1 5BE9AC1A
 P 8450 5600
 F 0 "BZ1" H 8603 5629 50  0000 L CNN
 F 1 "Buzzer" H 8603 5538 50  0000 L CNN
-F 2 "Buzzer_Beeper:Buzzer_12x9.5RM7.6" V 8425 5700 50  0001 C CNN
+F 2 "custom_components:Buzzer_12x9.5RM7.6" V 8425 5700 50  0001 C CNN
 F 3 "~" V 8425 5700 50  0001 C CNN
 	1    8450 5600
 	1    0    0    -1  
@@ -1792,10 +1792,10 @@ Connection ~ 950  6400
 Wire Wire Line
 	950  6400 1100 6400
 $Comp
-L Connector:Conn_01x02_Male J?
+L Connector:Conn_01x02_Male J4
 U 1 1 5C5D6109
 P 3850 4000
-F 0 "J?" H 3900 4050 50  0000 R CNN
+F 0 "J4" H 3900 4050 50  0000 R CNN
 F 1 "Conn_01x02_Male" V 3823 3971 50  0000 R CNN
 F 2 "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical" H 3850 4000 50  0001 C CNN
 F 3 "~" H 3850 4000 50  0001 C CNN

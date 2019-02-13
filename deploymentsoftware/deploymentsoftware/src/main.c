@@ -11,12 +11,12 @@ Daniel Corey
 #include "Tools/RingBuffer.h"
 #include "Drivers/timercounter.h"
 
-#define VERSION_MAJOR			0
-#define VERSION_MINOR			1
+#define VERSION_MAJOR			1
+#define VERSION_MINOR			0
 #define VERSION_PATCH			0
 
 #define DEVICE_NAME				"Deployment control system"
-#define INFO_STATUS				"NOT FOR FLIGHT"
+#define INFO_STATUS				"Flight Software"
 
 #define BUZZER_ARMED_FREQ		5.0f
 #define BUZZER_DISARMED_FREQ	0.0f
@@ -54,8 +54,8 @@ RingBufferu8_t xbee_input_buff;
 uint8_t xbee_input_backing_buffer[XBEE_BACKING_BUFF_LEN];
 void input_buff_setup(void);
 
-#define BUZZER_OFF						0
-#define BUZZER_BEEPING					1
+#define BUZZER_BEEPING_SLOW				0
+#define BUZZER_BEEPING_FAST				1
 #define BUZZER_CONTINUOUS				2
 uint8_t isr_buzzer_duty;
 
@@ -66,11 +66,11 @@ ISR (CLOCK_INT_VECT)
 
 ISR (BUZZER_INT_VECT)
 {
-	if (isr_buzzer_duty == BUZZER_OFF || (isr_buzzer_duty == BUZZER_BEEPING && time_ds % 2 == 0))
+	if ((isr_buzzer_duty == BUZZER_BEEPING_SLOW && time_ds % 15 < 14) || (isr_buzzer_duty == BUZZER_BEEPING_FAST && time_ds % 2 == 0))
 	{
 		gpio_set_pin_low(BUZZER_CTRL_PIN);
 	}
-	else if (isr_buzzer_duty == BUZZER_BEEPING)
+	else if (isr_buzzer_duty == BUZZER_BEEPING_SLOW || isr_buzzer_duty == BUZZER_BEEPING_FAST)
 	{
 		gpio_toggle_pin(BUZZER_CTRL_PIN);
 	}
@@ -100,7 +100,7 @@ int main (void)
 	
 	//Enable interrupts for serial receive and buzzer control
 	TC0_setup(&BUZZER_INTERRUPT_TC, BUZZER_INTERRUPT_SYSCLK_PORT, 0b0000, false);
-	TC_config(&BUZZER_INTERRUPT_TC, 1000.0f, 0.5f);
+	TC_config(&BUZZER_INTERRUPT_TC, 2000.0f, 0.5f);
 	BUZZER_INTERRUPT_TC.INTCTRLA = TC_OVFINTLVL_MED_gc; //Enable buzzer TC interrupt, medium-level
 	
 	TC0_setup(&CLOCK_INTERRUPT_TC, CLOCK_INTERRUPT_SYSCLK_PORT, 0b0000, false);
@@ -173,12 +173,12 @@ void config_LEDs_and_buzzer(devicestate state)
 	if (state == STATE_ARMED)
 	{
 		TC_config(&LED_1_TC, LED_ARMED_FREQ, 0.5);
-		isr_buzzer_duty = BUZZER_BEEPING;
+		isr_buzzer_duty = BUZZER_BEEPING_FAST;
 	}
 	else
 	{
 		TC_config(&LED_1_TC, LED_DISARMED_FREQ, 0.5);
-		isr_buzzer_duty = BUZZER_OFF;
+		isr_buzzer_duty = BUZZER_BEEPING_SLOW;
 	}
 }
 

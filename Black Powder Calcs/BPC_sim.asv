@@ -1,0 +1,11 @@
+press_i = 40; %psig
+L_i = 6; %in
+gamma = 1.4; 
+D = 6; %in
+A = (pi / 4) * D^2;
+V_i = A * L_i;
+
+C = (press_i * V_i)^gamma;
+
+delta_t = 0.1; %s
+L_max = 

@@ -25,12 +25,13 @@ Daniel Corey
 #define LED_DISARMED_FREQ		1.0f
 
 typedef enum {STATE_DISARMED, STATE_ARMED} devicestate;
-typedef enum {CMD_INVALID, CMD_GET_VERSION, CMD_ARM, CMD_DISARM, CMD_FIRE_PRIMARY, CMD_FIRE_BACKUP} devicecommand;
+typedef enum {CMD_INVALID, CMD_GET_VERSION, CMD_ARM, CMD_DISARM, CMD_FIRE_PRIMARY, CMD_FIRE_BACKUP, CMD_VERIFY_COMMS} devicecommand;
 #define STR_CMD_GET_VERSION			"UAH_CRW_DEPLOYMENT_CHECK_VERSION"
 #define STR_CMD_ARM					"UAH_CRW_arm_payload_deployment"
 #define STR_CMD_DISARM				"UAH_CRW_disarm_payload_deployment"
 #define STR_CMD_FIRE_PRIMARY		"UAH_CRW_deploy_payload_primary"
 #define STR_CMD_FIRE_BACKUP			"UAH_CRW_deploy_payload_backup"
+#define STR_CMD_VERIFY_COMMS		"UAH_CRW_verify_communications"
 #define CMD_UNIFORM_PRECURSOR		"UAH_CRW"
 #define TWICE_LONGEST_VALID_CMD		68U
 #define LONGEST_VALID_CMD			34U
@@ -57,26 +58,32 @@ void input_buff_setup(void);
 #define BUZZER_BEEPING_SLOW				0
 #define BUZZER_BEEPING_FAST				1
 #define BUZZER_CONTINUOUS				2
+#define BUZZER_OVERRIDE					3
 uint8_t isr_buzzer_duty;
+
+void buzzer_on(void);
+void buzzer_off(void);
+
+/*ISR (CLOCK_INT_VECT)
+{
+	time_ds++;
+}*/
+
+ISR (BUZZER_INT_VECT)
+{
+	
+}
 
 ISR (CLOCK_INT_VECT)
 {
 	time_ds++;
-}
-
-ISR (BUZZER_INT_VECT)
-{
 	if ((isr_buzzer_duty == BUZZER_BEEPING_SLOW && time_ds % 15 < 14) || (isr_buzzer_duty == BUZZER_BEEPING_FAST && time_ds % 2 == 0))
 	{
-		gpio_set_pin_low(BUZZER_CTRL_PIN);
+		BUZZER_INTERRUPT_TC.CCA = 0;
 	}
-	else if (isr_buzzer_duty == BUZZER_BEEPING_SLOW || isr_buzzer_duty == BUZZER_BEEPING_FAST)
+	else if (isr_buzzer_duty == BUZZER_BEEPING_SLOW || isr_buzzer_duty == BUZZER_BEEPING_FAST || isr_buzzer_duty == BUZZER_CONTINUOUS)
 	{
-		gpio_toggle_pin(BUZZER_CTRL_PIN);
-	}
-	else
-	{
-		gpio_toggle_pin(BUZZER_CTRL_PIN);
+		BUZZER_INTERRUPT_TC.CCA = (uint16_t)(0.5f * (float)BUZZER_INTERRUPT_TC.PER);
 	}
 }
 
@@ -99,9 +106,9 @@ int main (void)
 	devicecommand currentcmd = CMD_INVALID;
 	
 	//Enable interrupts for serial receive and buzzer control
-	TC0_setup(&BUZZER_INTERRUPT_TC, BUZZER_INTERRUPT_SYSCLK_PORT, 0b0000, false);
+	TC0_setup(&BUZZER_INTERRUPT_TC, BUZZER_INTERRUPT_SYSCLK_PORT, 0b0001, true);
 	TC_config(&BUZZER_INTERRUPT_TC, 2000.0f, 0.5f);
-	BUZZER_INTERRUPT_TC.INTCTRLA = TC_OVFINTLVL_MED_gc; //Enable buzzer TC interrupt, medium-level
+	//BUZZER_INTERRUPT_TC.INTCTRLA = TC_OVFINTLVL_MED_gc; //Enable buzzer TC interrupt, medium-level
 	
 	TC0_setup(&CLOCK_INTERRUPT_TC, CLOCK_INTERRUPT_SYSCLK_PORT, 0b0000, false);
 	TC_config(&CLOCK_INTERRUPT_TC, 10.0f, 0.5f);
@@ -114,7 +121,6 @@ int main (void)
 	sei(); //Interrupts on
 	
 	TC0_setup(&LED_1_TC, SYSCLK_PORT_C, 0b0001, true);
-	TC0_setup(&LED_2_TC, SYSCLK_PORT_D, 0b0001, true);
 	config_LEDs_and_buzzer(state);
 	
 	while (1)
@@ -135,6 +141,39 @@ int main (void)
 			{
 				set_buzzer_freq(BUZZER_ARMED_FREQ);
 				state = STATE_ARMED;
+				config_LEDs_and_buzzer(state);
+			}
+			else if (currentcmd == CMD_VERIFY_COMMS)
+			{
+				//Produce a unique series of beeps that verifies communication with the ground station
+				uint8_t i;
+				isr_buzzer_duty = BUZZER_OVERRIDE;
+				delay_ms(500);
+				uint16_t dot_duration = 75;
+				uint16_t dash_duration = 3 * dot_duration;
+				for (i = 0; i < 3; i++)
+				{
+					buzzer_on();
+					delay_ms(dot_duration);
+					buzzer_off();
+					delay_ms(dot_duration);
+				}
+				delay_ms(dash_duration);
+				for (i = 0; i < 3; i++)
+				{
+					buzzer_on();
+					delay_ms(dash_duration);
+					buzzer_off();
+					delay_ms(dot_duration);
+				}
+				delay_ms(dash_duration);
+				for (i = 0; i < 3; i++)
+				{
+					buzzer_on();
+					delay_ms(dot_duration);
+					buzzer_off();
+					delay_ms(dot_duration);
+				}
 				config_LEDs_and_buzzer(state);
 			}
 			//No other commands are valid, perform no processing on them
@@ -162,10 +201,8 @@ int main (void)
 				config_LEDs_and_buzzer(state);
 				set_buzzer_freq(BUZZER_DISARMED_FREQ);
 			}
-		}
-		
+		}	
 	}
-	/* Insert application code here, after the board has been initialized. */
 }
 
 void config_LEDs_and_buzzer(devicestate state)
@@ -180,6 +217,16 @@ void config_LEDs_and_buzzer(devicestate state)
 		TC_config(&LED_1_TC, LED_DISARMED_FREQ, 0.5);
 		isr_buzzer_duty = BUZZER_BEEPING_SLOW;
 	}
+}
+
+void buzzer_on(void)
+{
+	BUZZER_INTERRUPT_TC.CCA = (uint16_t)(0.5f * (float)BUZZER_INTERRUPT_TC.PER);
+}
+
+void buzzer_off(void)
+{
+	BUZZER_INTERRUPT_TC.CCA = 0;
 }
 
 void input_buff_setup(void)
@@ -213,8 +260,8 @@ void pin_setup(void)
 	gpio_configure_pin(LED_1_PIN, IOPORT_DIR_OUTPUT);
 	gpio_set_pin_low(LED_1_PIN);
 	
-	//gpio_configure_pin(LED_2_PIN, IOPORT_DIR_OUTPUT);
-	//gpio_set_pin_low(LED_2_PIN);
+	gpio_configure_pin(LED_2_PIN, IOPORT_DIR_OUTPUT);
+	gpio_set_pin_low(LED_2_PIN);
 	
 	gpio_configure_pin(EMATCH_PRIMARY_PIN, IOPORT_DIR_OUTPUT);
 	gpio_set_pin_low(EMATCH_PRIMARY_PIN);
@@ -275,6 +322,11 @@ devicecommand getnextcmd(void)
 		rbu8_delete_oldest(&xbee_input_buff, (uint16_t)cmd_start - (uint16_t)buffer + strlen(STR_CMD_FIRE_BACKUP)); //Delete everything through the end of the CMD
 		return CMD_FIRE_BACKUP;
 	}
+	else if (memcmp(cmd_start, STR_CMD_VERIFY_COMMS, strlen(STR_CMD_VERIFY_COMMS)) == 0)
+	{
+		rbu8_delete_oldest(&xbee_input_buff, (uint16_t)cmd_start - (uint16_t)buffer + strlen(STR_CMD_VERIFY_COMMS)); //Delete everything through the end of the CMD
+		return CMD_VERIFY_COMMS;
+	}
 	else //Not a real command
 	{
 		printf("Not a real command\n");
@@ -292,7 +344,6 @@ devicecommand getnextcmd(void)
 
 void firing_autosequence(port_pin_t ematch_pin)
 {
-	//TODO: set buzzer duty cycle to 100%
 	isr_buzzer_duty = BUZZER_CONTINUOUS;
 	set_12V_powered(true);
 	delay_s(7); //Charge capacitor bank

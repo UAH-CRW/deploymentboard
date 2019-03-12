@@ -39,6 +39,7 @@ typedef enum {CMD_INVALID, CMD_GET_VERSION, CMD_ARM, CMD_DISARM, CMD_FIRE_PRIMAR
 void pin_setup(void);
 devicecommand getnextcmd(void);
 void firing_autosequence(port_pin_t ematch_pin);
+void test_autosequence(port_pin_t ematch_pin);
 void set_led_freq(float freq);
 void set_buzzer_freq(float freq);
 void LED_setup(void);
@@ -77,6 +78,7 @@ ISR (BUZZER_INT_VECT)
 ISR (CLOCK_INT_VECT)
 {
 	time_ds++;
+	BUZZER_INTERRUPT_TC.CCA = 0; //XXX FIXME
 	if ((isr_buzzer_duty == BUZZER_BEEPING_SLOW && time_ds % 15 < 14) || (isr_buzzer_duty == BUZZER_BEEPING_FAST && time_ds % 2 == 0))
 	{
 		BUZZER_INTERRUPT_TC.CCA = 0;
@@ -98,7 +100,7 @@ int main (void)
 	sysclk_init();
 	pin_setup();
 	LED_setup();
-	buzzer_setup();
+	//buzzer_setup();
 	UART_computer_init(&COMMS_USART, &PORTC, USART_TX_PIN, USART_RX_PIN);
 	isr_buzzer_duty = BUZZER_CONTINUOUS;
 
@@ -106,8 +108,8 @@ int main (void)
 	devicecommand currentcmd = CMD_INVALID;
 	
 	//Enable interrupts for serial receive and buzzer control
-	TC0_setup(&BUZZER_INTERRUPT_TC, BUZZER_INTERRUPT_SYSCLK_PORT, 0b0001, true);
-	TC_config(&BUZZER_INTERRUPT_TC, 2000.0f, 0.5f);
+	//TC0_setup(&BUZZER_INTERRUPT_TC, BUZZER_INTERRUPT_SYSCLK_PORT, 0b0001, true);
+	//TC_config(&BUZZER_INTERRUPT_TC, 2000.0f, 0.5f);
 	//BUZZER_INTERRUPT_TC.INTCTRLA = TC_OVFINTLVL_MED_gc; //Enable buzzer TC interrupt, medium-level
 	
 	TC0_setup(&CLOCK_INTERRUPT_TC, CLOCK_INTERRUPT_SYSCLK_PORT, 0b0000, false);
@@ -122,7 +124,6 @@ int main (void)
 	
 	TC0_setup(&LED_1_TC, SYSCLK_PORT_C, 0b0001, true);
 	config_LEDs_and_buzzer(state);
-	
 	while (1)
 	{
 		//printf("Running main loop\n");
@@ -189,7 +190,8 @@ int main (void)
 			}
 			else if (currentcmd == CMD_FIRE_PRIMARY)
 			{
-				firing_autosequence(EMATCH_PRIMARY_PIN);
+				//firing_autosequence(EMATCH_PRIMARY_PIN);
+				test_autosequence(EMATCH_PRIMARY_PIN);
 				state = STATE_DISARMED;
 				config_LEDs_and_buzzer(state);
 				set_buzzer_freq(BUZZER_DISARMED_FREQ);
@@ -352,6 +354,28 @@ void firing_autosequence(port_pin_t ematch_pin)
 	ioport_set_pin_high(ematch_pin); //Fire E-match
 	delay_ms(3000); //Allow time for E-match to fire
 	ioport_set_pin_low(ematch_pin); //Stop firing
+	extend_solenoid(); //De-energize
+	set_12V_powered(false); //Stop charging capacitor bank
+}
+
+void test_autosequence(port_pin_t ematch_pin)
+{
+	isr_buzzer_duty = BUZZER_CONTINUOUS;
+	set_12V_powered(true);
+	delay_s(5); //Charge capacitor bank
+	retract_solenoid();
+	delay_ms(250); //Provide time for solenoid to physically retract
+	uint16_t i2;
+	uint16_t adc_data[1024];
+	uint16_t delay = 500;
+	for (i2 = 0; i2 < 8000; i2++) //Oscillate 12V supply
+	{
+		delay_us(delay);
+		set_12V_powered(false);
+		delay_us(delay);
+		set_12V_powered(true);
+	}
+	delay_ms(250); //Allow time for E-match to fire
 	extend_solenoid(); //De-energize
 	set_12V_powered(false); //Stop charging capacitor bank
 }

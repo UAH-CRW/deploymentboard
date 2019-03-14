@@ -10,19 +10,23 @@ Daniel Corey
 #include "Drivers/uart_tools.h"
 #include "Tools/RingBuffer.h"
 #include "Drivers/timercounter.h"
+#include "Drivers/adc_sense.h"
 
-#define VERSION_MAJOR			1
-#define VERSION_MINOR			0
-#define VERSION_PATCH			0
+#define VERSION_MAJOR					1
+#define VERSION_MINOR					0
+#define VERSION_PATCH					0
 
-#define DEVICE_NAME				"Deployment control system"
-#define INFO_STATUS				"Flight Software"
+#define DEVICE_NAME						"Deployment control system"
+#define INFO_STATUS						"Flight Software"
 
-#define BUZZER_ARMED_FREQ		5.0f
-#define BUZZER_DISARMED_FREQ	0.0f
+#define BUZZER_ARMED_FREQ				5.0f
+#define BUZZER_DISARMED_FREQ			0.0f
 
-#define LED_ARMED_FREQ			5.0f
-#define LED_DISARMED_FREQ		1.0f
+#define LED_ARMED_FREQ					5.0f
+#define LED_DISARMED_FREQ				1.0f
+
+#define SOLENOID_SMOOTH					0.2f
+#define SOLENOID_RETRACT_THRESHOLD		11400
 
 typedef enum {STATE_DISARMED, STATE_ARMED} devicestate;
 typedef enum {CMD_INVALID, CMD_GET_VERSION, CMD_ARM, CMD_DISARM, CMD_FIRE_PRIMARY, CMD_FIRE_BACKUP, CMD_VERIFY_COMMS} devicecommand;
@@ -65,11 +69,6 @@ uint8_t isr_buzzer_duty;
 void buzzer_on(void);
 void buzzer_off(void);
 
-/*ISR (CLOCK_INT_VECT)
-{
-	time_ds++;
-}*/
-
 ISR (BUZZER_INT_VECT)
 {
 	
@@ -78,7 +77,6 @@ ISR (BUZZER_INT_VECT)
 ISR (CLOCK_INT_VECT)
 {
 	time_ds++;
-	BUZZER_INTERRUPT_TC.CCA = 0; //XXX FIXME
 	if ((isr_buzzer_duty == BUZZER_BEEPING_SLOW && time_ds % 15 < 14) || (isr_buzzer_duty == BUZZER_BEEPING_FAST && time_ds % 2 == 0))
 	{
 		BUZZER_INTERRUPT_TC.CCA = 0;
@@ -100,7 +98,8 @@ int main (void)
 	sysclk_init();
 	pin_setup();
 	LED_setup();
-	//buzzer_setup();
+	adc_init();
+	buzzer_setup();
 	UART_computer_init(&COMMS_USART, &PORTC, USART_TX_PIN, USART_RX_PIN);
 	isr_buzzer_duty = BUZZER_CONTINUOUS;
 
@@ -108,8 +107,8 @@ int main (void)
 	devicecommand currentcmd = CMD_INVALID;
 	
 	//Enable interrupts for serial receive and buzzer control
-	//TC0_setup(&BUZZER_INTERRUPT_TC, BUZZER_INTERRUPT_SYSCLK_PORT, 0b0001, true);
-	//TC_config(&BUZZER_INTERRUPT_TC, 2000.0f, 0.5f);
+	TC0_setup(&BUZZER_INTERRUPT_TC, BUZZER_INTERRUPT_SYSCLK_PORT, 0b0001, true);
+	TC_config(&BUZZER_INTERRUPT_TC, 2000.0f, 0.5f);
 	//BUZZER_INTERRUPT_TC.INTCTRLA = TC_OVFINTLVL_MED_gc; //Enable buzzer TC interrupt, medium-level
 	
 	TC0_setup(&CLOCK_INTERRUPT_TC, CLOCK_INTERRUPT_SYSCLK_PORT, 0b0000, false);
@@ -124,6 +123,7 @@ int main (void)
 	
 	TC0_setup(&LED_1_TC, SYSCLK_PORT_C, 0b0001, true);
 	config_LEDs_and_buzzer(state);
+	
 	while (1)
 	{
 		//printf("Running main loop\n");
@@ -190,8 +190,7 @@ int main (void)
 			}
 			else if (currentcmd == CMD_FIRE_PRIMARY)
 			{
-				//firing_autosequence(EMATCH_PRIMARY_PIN);
-				test_autosequence(EMATCH_PRIMARY_PIN);
+				firing_autosequence(EMATCH_PRIMARY_PIN);
 				state = STATE_DISARMED;
 				config_LEDs_and_buzzer(state);
 				set_buzzer_freq(BUZZER_DISARMED_FREQ);
@@ -350,34 +349,67 @@ void firing_autosequence(port_pin_t ematch_pin)
 	set_12V_powered(true);
 	delay_s(7); //Charge capacitor bank
 	retract_solenoid();
-	delay_ms(500); //Provide time for solenoid to physically retract
-	ioport_set_pin_high(ematch_pin); //Fire E-match
-	delay_ms(3000); //Allow time for E-match to fire
-	ioport_set_pin_low(ematch_pin); //Stop firing
-	extend_solenoid(); //De-energize
-	set_12V_powered(false); //Stop charging capacitor bank
-}
-
-void test_autosequence(port_pin_t ematch_pin)
-{
-	isr_buzzer_duty = BUZZER_CONTINUOUS;
-	set_12V_powered(true);
-	delay_s(5); //Charge capacitor bank
-	retract_solenoid();
-	delay_ms(250); //Provide time for solenoid to physically retract
 	uint16_t i2;
-	uint16_t adc_data[1024];
-	uint16_t delay = 500;
-	for (i2 = 0; i2 < 8000; i2++) //Oscillate 12V supply
+	const uint16_t samples_stored = 41;
+	uint16_t stored_data[samples_stored];
+	for (i2 = 0; i2 < samples_stored; i2++)
 	{
-		delay_us(delay);
-		set_12V_powered(false);
-		delay_us(delay);
-		set_12V_powered(true);
+		stored_data[i2] = get_voltage_capacitor();
+		if (i2 > 0) //Smooth data
+		{
+			stored_data[i2] = SOLENOID_SMOOTH * stored_data[i2 - 1] + (1.0f - SOLENOID_SMOOTH) * stored_data[i2];
+		}
+		delay_us(750);
 	}
-	delay_ms(250); //Allow time for E-match to fire
-	extend_solenoid(); //De-energize
+	
+	uint32_t relevant_points = 0;
+	for (i2 = 35; i2 < 41; i2++)
+	{
+		relevant_points += stored_data[i2];
+	}
+	relevant_points /= 6;
+	
+	uint8_t solenoid_failed = false;
+	if (relevant_points <= SOLENOID_RETRACT_THRESHOLD)
+	{
+		solenoid_failed = true;
+	}
+	if (!solenoid_failed)
+	{
+		delay_ms(450); //Make sure that solenoid has actually retracted
+		ioport_set_pin_high(ematch_pin); //Fire E-match
+		delay_ms(3000); //Allow time for E-match to fire
+		ioport_set_pin_low(ematch_pin); //Stop firing
+		delay_ms(500); //Tiny bit of extra time in case E-match decides to finally go
+		extend_solenoid(); //De-energize
+	}
+	else //Failed to retract solenoid
+	{
+		extend_solenoid(); //Just in case it decides to move later
+		isr_buzzer_duty = BUZZER_OVERRIDE;
+		buzzer_off();
+		delay_ms(500);
+		for (i2 = 0; i2 < 5; i2++)
+		{
+			buzzer_on();
+			delay_ms(100);
+			buzzer_off();
+			delay_ms(100);
+			buzzer_on();
+			delay_ms(100);
+			buzzer_off();
+			delay_ms(700);
+			buzzer_on();
+			delay_ms(300);
+			buzzer_off();
+			delay_ms(1000);
+		}
+	}
+	
+	
 	set_12V_powered(false); //Stop charging capacitor bank
+	
+	
 }
 
 void set_12V_powered(bool state)

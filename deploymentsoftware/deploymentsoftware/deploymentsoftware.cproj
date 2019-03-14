@@ -381,6 +381,12 @@
     <None Include="src\config\conf_adc.h">
       <SubType>compile</SubType>
     </None>
+    <Compile Include="src\Drivers\adc_sense.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\Drivers\adc_sense.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\Drivers\timercounter.c">
       <SubType>compile</SubType>
     </Compile>
